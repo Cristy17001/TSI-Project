@@ -2,24 +2,38 @@
 
 ## Introduction
 
-- Explain the concept behind the article and how it applies multi-agent artificial intelligence.
+The paper focuses on leveraging advanced computer techniques to enhance the quality of images. It introduces the concept of Deep Learning, specifically utilizing Generative Adversarial Networks (GANs), to achieve Single Image Super-Resolution (SISR). This technique effectively transforms low-quality images into high-quality ones.
+
+Furthermore, the research highlights the broader implications of image quality improvement, such as aiding object identification in images. To address this, the paper proposes a novel approach employing Reinforcement Learning. Multiple agents are involved, each selecting a method to enhance image quality. The image is then updated based on the chosen method. The arrangement of agents encourages them to learn and select the most effective method for improving image quality.
 
 ## Applications
 
-- Discuss the contexts in which this type of artificial intelligence would be interesting to use.
+The use of multi-agent artificial intelligence for improving image quality has various applications:
+
+- **Medical Imaging:** High-resolution images can aid doctors and medical professionals in making more accurate diagnoses.
+- **Surveillance and Security:** Enhanced image quality can facilitate the identification of individuals or objects with greater precision.
+- **Photography and Art:** Artists and photographers can utilize image enhancement techniques to restore old or low-quality images, preserving valuable visual content.
+- **Forensics:** High-resolution images can offer more detailed information for forensic investigations, aiding in evidence analysis.
+
+These are just a few examples of the wide range of applications for improving low-resolution images using artificial intelligence. The field of image enhancement has numerous other important applications across various industries and domains.
 
 ## Code Execution Challenges and What the code does
 
-- Explain the difficulties in executing the code due to outdated libraries.
-- Show images descriving what the input and output of code are.
+During the execution of the code from [PixelRL-SR](https://github.com/Nhat-Thanh/PixelRL-SR) mentioned in the paper, we encountered technical difficulties related to an outdated library, specifically PyTorch. When attempting to run the code, we encountered an error indicating a vulnerability in the load function, which could potentially allow for the execution of code from a pickle-formatted file.
+
+To address this vulnerability, we applied a solution by adding the directive "weights_only=True" to each instance of the torch.load function in the code. This modification ensured that only the weights of the model were loaded, mitigating the potential security risk associated with executing arbitrary code.
+
+After implementing this solution, the code executed successfully without any further issues.
+
+- Explain the code a little more (used models, libraries and so on)
+- Show images describing the input and output of the code.
 
 ## Work Plan
 
-- Present the plan of work for the project.
+- Present the work plan for the project.
 - Mention the need to execute the code and understand its functioning.
-- Understand the underlying models and evaluate their effectiveness(say how it is being measured)
+- Understand the underlying models and evaluate their effectiveness (mention how it is being measured).
 
 ## Conclusion
 
-- Summarize the key points discussed in the presentation.
-- Highlight the importance of multi-agent artificial intelligence in the given context.
+Summarize the key points discussed in the presentation and highlight the importance of multi-agent artificial intelligence in the given context.
