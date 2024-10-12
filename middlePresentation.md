@@ -33,7 +33,13 @@ So, after executing successfully the code, our goal was to explore the used mode
 - **scikit-image**: A collection of algorithms for image processing in Python. It can be useful for tasks like filtering, transforming, and analyzing images.
 - **Matplotlib**: Often used for visualization of images and results, helping in debugging and presenting findings.
 
+Besides that, we found some models (neural networks) that are being used, such as:
+- **ESPCN (Efficient Sub-Pixel CNN)**: It is a model that reconstructs a high-resolution version of an image given a low-resolution version. It leverages efficient "sub-pixel convolution" layers, which learns an array of image upscaling filters.
+- **FSRCNN (Fast Super-Resolution Convolutional Neural Network)**: This model is designed for fast super-resolution, using a smaller network with fewer parameters to achieve better performance and faster inference times.
+- **SRCNN (Super-Resolution Convolutional Neural Network)**: This is a deep learning approach to image super-resolution. It is a straightforward CNN that learns to map low-resolution images to high-resolution ones.
+- **VDSR (Very Deep Super Resolution)**: This model uses a deeper architecture(it has 20 weight layers which is much deeper compared with SRCNN which only got 3 layers), leveraging residual learning to improve training and performance on super-resolution tasks.
 
+  
 - Explain the code a little more (used models and so on)
 - Show images describing the input and output of the code.
 
