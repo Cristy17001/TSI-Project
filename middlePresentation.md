@@ -25,7 +25,16 @@ To address this vulnerability, we applied a solution by adding the directive "we
 
 After implementing this solution, the code executed successfully without any further issues.
 
-- Explain the code a little more (used models, libraries and so on)
+So, after executing successfully the code, our goal was to explore the used models and libraries in this project. We identified many different libraries such as:
+- **PyTorch**: A popular deep learning framework that provides dynamic computation graphs, making it flexible and user-friendly for research and prototyping. The libraries torchvision and torchmetrics are as well often used for image processing tasks.
+- **TensorFlow/Keras**: Another widely-used deep learning framework. Keras provides a high-level interface to build and train models easily, while TensorFlow provides a more extensive set of tools and libraries for building complex models.
+- **OpenCV**: A powerful library for computer vision tasks, often used for image processing, manipulation, and augmentation. It can complement the functionality of PyTorch and other frameworks.
+- **NumPy**: While not specific to deep learning, NumPy is essential for numerical computations and handling image data, especially when working with arrays and matrices.
+- **scikit-image**: A collection of algorithms for image processing in Python. It can be useful for tasks like filtering, transforming, and analyzing images.
+- **Matplotlib**: Often used for visualization of images and results, helping in debugging and presenting findings.
+
+
+- Explain the code a little more (used models and so on)
 - Show images describing the input and output of the code.
 
 ## Work Plan
