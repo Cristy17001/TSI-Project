@@ -43,13 +43,14 @@ So, after executing successfully the code, our goal was to explore the used mode
 - **Matplotlib**: Often used for visualization of images and results, helping in debugging and presenting findings.
 
 Besides that, we found some models (neural networks) that are being used, such as:
-- **ESPCN (Efficient Sub-Pixel CNN)**: It is a model that reconstructs a high-resolution version of an image given a low-resolution version. It leverages efficient "sub-pixel convolution" layers, which learns an array of image upscaling filters.
+- **ESPCN (Efficient Sub-Pixel CNN)**:  Short version: It is a model that reconstructs a high-resolution version of an image given a low-resolution version. In ESPCN, the network is a combination of several convolutional layers and a sub-pixel convolutional layer, the LR image is upscaled at the last pixel shuffle stage. Thus, a big advantage of ESPCN is that it has a higher computation speed. 
+Long version ( if professor asks about it): ESPCN has been proposed to add an efficient sub-pixel convolutional layer to the CNN network. ESPCN increases the resolution at the very end of the network. In ESPCN, the upscaling step is handled by the last layer, which means the smaller size LR image is directly fed to the network. Thus, there is no need to use the interpolation method. The network is capable of learning a better LR to HR mapping compared to an interpolation filter upscaling before feeding into the network. Due to the reduced input image size, a smaller filter size can be used to extract features. The computational complexity and memory cost is reduced so that the efficiency can be greatly enhanced. ** not needed (This is why ESPCN become an ideal choice for the super-resolution of HD videos in real-time)  **
 - **FSRCNN (Fast Super-Resolution Convolutional Neural Network)**: This model is designed for fast super-resolution, using a smaller network with fewer parameters to achieve better performance and faster inference times.
 - **SRCNN (Super-Resolution Convolutional Neural Network)**: This is a deep learning approach to image super-resolution. It is a straightforward CNN that learns to map low-resolution images to high-resolution ones.
 - **VDSR (Very Deep Super Resolution)**: This model uses a deeper architecture(it has 20 weight layers which is much deeper compared with SRCNN which only got 3 layers), leveraging residual learning to improve training and performance on super-resolution tasks.
 
 - Explain the code a little more (used models and so on)
-- The code is equipped with a dataset that provides a total of 391 images to train each of the models implemented. Firstly, it is used a  set of 91 images of basic, low-detailed nature-based images, followed by a mix of 100 random-themed images with varying complexities and textures, and a set of 91 images of basic, low-detailed nature-based images, and then, the remaining 200 are royalty-free images from the BSD (Berkeley Segmentation Dataset) testing set, which is commonly used in computer vision tasks. It is important to note that the BSD is frequently used for evaluating natural edge detection that includes not only object contours but also object interior boundaries and background boundaries.
+- The code is equipped with a dataset that provides a total of 391 images to train each of the models implemented. Firstly, it is used a  set of 91 images of basic, low-detailed nature-based images, followed by a mix of 100 random-themed images with varying complexities and textures, and then, the remaining 200 are royalty-free images from the BSD (Berkeley Segmentation Dataset) testing set, which is commonly used in computer vision tasks. It is important to note that the BSD is frequently used for evaluating natural edge detection that includes not only object contours but also object interior boundaries and background boundaries.
 Meanwhile a set of 5 images is used to test models with scale factors of x2, x3, and x4, where the result is the average Peak signal-to-noise ratio, that is , the quantity measured as the ratio between the power of the signal noise and a signal’s maximum power, of all images.
 - At the end of training, an snapshot is taken to save the training process and track the models improvements.
 - To validate the model effectively, that is , to assure that the model itself is learning effectively, the model performance is checked with a set of 14 images , with nature-based themes, while each model is being trained. This validation step ensures that the model generalizes well beyond the training data and continues to improve in real-world scenarios.
@@ -62,16 +63,18 @@ Meanwhile a set of 5 images is used to test models with scale factors of x2, x3,
 
 *Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).*
 
+- For each scale factor, to each used model is evaluated a classification score, that ranges between 20.00-35.00.
+![Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).](PixelRL-SR\scores.png "Score Table")
+*Classification scores for each model evaluated, given each of the separate subsets of the actual dataset + Urban 100, being the Bold texts the best resuls*
+
 ## Work Plan
 
 - Present the work plan for the project.
 
-- We aim forward to implement new, and most recent , training models, to improve the super-resolutioning process itself, and seek more efficiency, since the actual models still struggle a lot when using panoramic images , that , in the sense of hence, tend to have high-resolutions while being heavily detailed and dense. 
-- Mention the need to execute the code and understand its functioning.
-- Understand the underlying models and evaluate their effectiveness (mention how it is being measured).
-- For each scale factor, to each used model is evaluated a classification score, that ranges between 20.00-35.00.
-![Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).](PixelRL-SR\scores.png "Score Table")
-*Classification scores for each model evaluated, given each of the separate subsets of the actual dataset + Urban 100, being the Bold texts the best resuls*
+- Given that the code implementation was not documented, first of all, it is necessary to follow and understand precisely the actual structure of the code, as well as their inner mechanisms, classes and functions.
+- On the one hand , we acknoledged the importance of checking and verifying the models already implemented, in order to check possible errors that are live , and improve their performance. For that instance, we need also to understand these underlying models and verify how their effectiveness is being measured and evaluated.
+- On the other hand, we aim forward to implement new, and more recent , training models, to improve the super-resolutioning process itself, and seek more efficiency and performance, since the actual models still struggle a lot when using panoramic images, that , in the sense of hence, tend to have high-resolutions while being heavily detailed and dense. Thus, one of the crucial parts of the work plan is that all the members are commited to search for these new models to be implemented, as well as for trying to implement them, in a way to find new PSNR scores and, subsequently, compare these models newly introduced. 
+
 ## Conclusion
 
-Summarize the key points discussed in the presentation and highlight the importance of multi-agent artificial intelligence in the given context.
+- Finally , we are all set to reproduce the work carried out, as well as to continue this work with the most recent models and implementations available.
