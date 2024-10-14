@@ -6,6 +6,15 @@ The paper focuses on leveraging advanced computer techniques to enhance the qual
 
 Furthermore, the research highlights the broader implications of image quality improvement, such as aiding object identification in images. To address this, the paper proposes a novel approach employing Reinforcement Learning. Multiple agents are involved, each selecting a method to enhance image quality. The image is then updated based on the chosen method. The arrangement of agents encourages them to learn and select the most effective method for improving image quality.
 
+(A minha correção:)
+
+Recent advancements in deep learning have significantly impacted not only image classification but also various image processing tasks such as filtering, colorization, generation, and translation. These tasks utilize neural networks, which can be categorized into two primary structures: Convolutional Neural Networks (CNNs) for image recognition and Fully Convolutional Networks (FCNs) for tasks requiring pixel-level precision.
+
+Building upon the success of Deep Q-Networks (DQNs), which demonstrated human-level performance in playing Atari games, there has been growing interest in applying Deep Reinforcement Learning (RL) to image processing. However, earlier methods in deep RL were limited to global actions (e.g., image cropping or color enhancement), making them unsuitable for pixel-wise manipulations required in more complex tasks such as image denoising.
+
+The text proposes a novel approach called PixelRL, a multi-agent reinforcement learning (RL) framework designed for image processing tasks at the pixel level. In pixelRL, each pixel is controlled by an agent that learns optimal actions to maximize rewards across all pixels, allowing for tasks like local color enhancement, and saliency-driven image editing. To overcome the computational challenge of handling millions of agents (one per pixel), the method leverages fully convolutional networks (FCNs), enabling efficient parameter sharing among agents.
+
+Additionally, the paper introduces reward map convolution, a technique that allows agents to consider both their own pixel’s future state and neighboring pixels, enhancing learning efficiency. This approach is unique in its interpretability, as it makes it possible to observe the agents’ actions. The experimental results show that pixelRL achieves performance comparable to or better than traditional CNN-based methods on various image processing tasks.
 ## Applications
 
 The use of multi-agent artificial intelligence for improving image quality has various applications:
@@ -39,16 +48,30 @@ Besides that, we found some models (neural networks) that are being used, such a
 - **SRCNN (Super-Resolution Convolutional Neural Network)**: This is a deep learning approach to image super-resolution. It is a straightforward CNN that learns to map low-resolution images to high-resolution ones.
 - **VDSR (Very Deep Super Resolution)**: This model uses a deeper architecture(it has 20 weight layers which is much deeper compared with SRCNN which only got 3 layers), leveraging residual learning to improve training and performance on super-resolution tasks.
 
-  
 - Explain the code a little more (used models and so on)
+- The code is equipped with a dataset that provides a total of 391 images to train each of the models implemented. Firstly, it is used a  set of 91 images of basic, low-detailed nature-based images, followed by a mix of 100 random-themed images with varying complexities and textures, and a set of 91 images of basic, low-detailed nature-based images, and then, the remaining 200 are royalty-free images from the BSD (Berkeley Segmentation Dataset) testing set, which is commonly used in computer vision tasks. It is important to note that the BSD is frequently used for evaluating natural edge detection that includes not only object contours but also object interior boundaries and background boundaries.
+Meanwhile a set of 5 images is used to test models with scale factors of x2, x3, and x4, where the result is the average Peak signal-to-noise ratio, that is , the quantity measured as the ratio between the power of the signal noise and a signal’s maximum power, of all images.
+- At the end of training, an snapshot is taken to save the training process and track the models improvements.
+- To validate the model effectively, that is , to assure that the model itself is learning effectively, the model performance is checked with a set of 14 images , with nature-based themes, while each model is being trained. This validation step ensures that the model generalizes well beyond the training data and continues to improve in real-world scenarios.
+- Finally, to better understand the model's behavior and to track the learning process, a sequence of action maps are drew throughout the model evolution. Thus, if the model is not performing well on certain images or regions, the action map can pinpoint where and why the model is failing, guiding improvements to the model's architecture or training process.
+
+
 - Show images describing the input and output of the code.
+
+![Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).](PixelRL-SR\example.png "Before")
+
+*Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).*
 
 ## Work Plan
 
 - Present the work plan for the project.
+
+- We aim forward to implement new, and most recent , training models, to improve the super-resolutioning process itself, and seek more efficiency, since the actual models still struggle a lot when using panoramic images , that , in the sense of hence, tend to have high-resolutions while being heavily detailed and dense. 
 - Mention the need to execute the code and understand its functioning.
 - Understand the underlying models and evaluate their effectiveness (mention how it is being measured).
-
+- For each scale factor, to each used model is evaluated a classification score, that ranges between 20.00-35.00.
+![Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).](PixelRL-SR\scores.png "Score Table")
+*Classification scores for each model evaluated, given each of the separate subsets of the actual dataset + Urban 100, being the Bold texts the best resuls*
 ## Conclusion
 
 Summarize the key points discussed in the presentation and highlight the importance of multi-agent artificial intelligence in the given context.
