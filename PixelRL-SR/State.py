@@ -1,5 +1,5 @@
 import torch
-from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model
+from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model, SwinIR
 from utils.common import exist_value, to_cpu
 
 class State:
@@ -16,10 +16,10 @@ class State:
         self.SRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.SRCNN.eval()
 
-        self.FSRCNN = FSRCNN_model(scale).to(device)
-        model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
-        self.FSRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
-        self.FSRCNN.eval()
+        # self.FSRCNN = FSRCNN_model(scale).to(device)
+        # model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
+        # self.FSRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        # self.FSRCNN.eval()
 
         self.ESPCN = ESPCN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/ESPCN-x{scale}.pt"
@@ -30,6 +30,11 @@ class State:
         model_path = "sr_weight/VDSR.pt"
         self.VDSR.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.VDSR.eval()
+        
+        self.SwinIR = SwinIR(scale).to(device)
+        model_path = f"sr_weight/x{scale}/SwinIR-M-x{scale}.pth"
+        self.SwinIR.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        self.SwinIR.eval()
 
     def reset(self, lr, bicubic):
         self.lr_image = lr 
@@ -48,7 +53,8 @@ class State:
         inner_state = to_cpu(inner_state)
         srcnn = self.sr_image.clone()
         espcn = self.sr_image.clone()
-        fsrcnn = self.sr_image.clone()
+        # fsrcnn = self.sr_image.clone()
+        swinir = self.sr_image.clone()
         vdsr = self.sr_image.clone()
 
         neutral = (self.move_range - 1) / 2
@@ -69,7 +75,7 @@ class State:
             if exist_value(act, 5):
                 vdsr = to_cpu(self.VDSR(self.sr_image))
             if exist_value(act, 6):
-                fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
+                swinir = to_cpu(self.SwinIR(self.lr_image))
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
@@ -78,7 +84,7 @@ class State:
         self.sr_image = torch.where(act==3, espcn,  self.sr_image)
         self.sr_image = torch.where(act==4, srcnn,  self.sr_image)
         self.sr_image = torch.where(act==5, vdsr,   self.sr_image)
-        self.sr_image = torch.where(act==6, fsrcnn, self.sr_image)
+        self.sr_image = torch.where(act==6, swinir, self.sr_image)
 
         self.tensor[:,0:3,:,:] = self.sr_image
         self.tensor[:,-64:,:,:] = inner_state
