@@ -1,6 +1,8 @@
 import torch
 from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model, SwinIR
 from utils.common import exist_value, to_cpu
+import numpy as np
+import os
 
 class State:
     def __init__(self, scale, device):
@@ -9,6 +11,7 @@ class State:
         self.sr_image = None
         self.tensor = None
         self.move_range = 3
+        self.window_size = 8
 
         dev = torch.device(device)
         self.SRCNN = SRCNN_model().to(device)
@@ -20,7 +23,6 @@ class State:
         # model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
         # self.FSRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
         # self.FSRCNN.eval()
-
         self.ESPCN = ESPCN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/ESPCN-x{scale}.pt"
         self.ESPCN.load_state_dict(torch.load(model_path, dev, weights_only=True))
@@ -30,10 +32,16 @@ class State:
         model_path = "sr_weight/VDSR.pt"
         self.VDSR.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.VDSR.eval()
-        
-        self.SwinIR = SwinIR(scale).to(device)
+
+        #/content/TSI-Project/PixelRL-SR/sr_weight/x2/SwinIR-M-x2.pth
+        # BATCH SIZE ESTÁ HARDCODED A 64 TEM QUE SER ASSIM
+
+        # self.SwinIR = SwinIR(scale).to(device)
         model_path = f"sr_weight/x{scale}/SwinIR-M-x{scale}.pth"
-        self.SwinIR.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        self.SwinIR = SwinIR(upscale=scale, in_chans=3, img_size=64, window_size=self.window_size,
+            img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
+            mlp_ratio=2, upsampler='pixelshuffle', resi_connection='1conv').to(device)
+        self.SwinIR.load_state_dict(torch.load(model_path, dev, weights_only=True)['params'], strict=True)
         self.SwinIR.eval()
 
     def reset(self, lr, bicubic):
@@ -75,7 +83,14 @@ class State:
             if exist_value(act, 5):
                 vdsr = to_cpu(self.VDSR(self.sr_image))
             if exist_value(act, 6):
-                swinir = to_cpu(self.SwinIR(self.lr_image))
+              # pad input image to be a multiple of window_size
+              _, _, h_old, w_old = self.lr_image.size()
+              h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
+              w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+              lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
+              lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
+              swinir = to_cpu(self.SwinIR(lr_changed))
+              swinir = swinir[:, :, :60, :60]
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
