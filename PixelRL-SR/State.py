@@ -12,6 +12,7 @@ class State:
         self.tensor = None
         self.move_range = 3
         self.window_size = 8
+        self.scale = scale
 
         dev = torch.device(device)
         self.SRCNN = SRCNN_model().to(device)
@@ -37,7 +38,7 @@ class State:
         # BATCH SIZE ESTÁ HARDCODED A 64 TEM QUE SER ASSIM
 
         # self.SwinIR = SwinIR(scale).to(device)
-        model_path = f"sr_weight/x{scale}/SwinIR-M-x{scale}.pth"
+        model_path = f"sr_weight/x{scale}/SwinIR-M_x{scale}.pth"
         self.SwinIR = SwinIR(upscale=scale, in_chans=3, img_size=64, window_size=self.window_size,
             img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
             mlp_ratio=2, upsampler='pixelshuffle', resi_connection='1conv').to(device)
@@ -87,10 +88,11 @@ class State:
               _, _, h_old, w_old = self.lr_image.size()
               h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
               w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+              # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
               lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
               lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
               swinir = to_cpu(self.SwinIR(lr_changed))
-              swinir = swinir[:, :, :60, :60]
+              swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
