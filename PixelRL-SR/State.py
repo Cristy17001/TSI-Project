@@ -86,7 +86,7 @@ class State:
                 # Change from ycbcr to rgb
                 lr_changed = denorm01(lr_changed)
                 lr_changed = lr_changed.type(torch.uint8)
-                lr_changed = ycbcr2rgb(lr_changed).float().unsqueeze(0).to(self.device)
+                lr_changed = ycbcr2rgb(lr_changed).float().to(self.device)
                 lr_changed = norm01(lr_changed)
 
                 # Pad input image to be a multiple of window_size
