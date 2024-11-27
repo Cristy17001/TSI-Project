@@ -134,6 +134,8 @@ class PixelWiseA3C_InnerState_ConvR:
         while cur_step < max_step:
             cur_step += 1
             bicubic, lr, hr, _ = train_set.get_batch(batch_size)
+            print(lr.shape, hr.shape)
+            print(lr)
             train_reward, train_loss, train_metric = self.train_step(bicubic, lr, hr)
             train_reward_buffer.append(train_reward)
             train_loss_buffer.append(train_loss)

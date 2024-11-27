@@ -87,6 +87,7 @@ class State:
               # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
               lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
               lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
+              print(lr_changed)
               swinir = to_cpu(self.SwinIR(lr_changed))
               swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
 
