@@ -88,19 +88,24 @@ class State:
                 lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
                 
-                # Normalize the image to [0, 1]
-                lr_changed = lr_changed / 255.0
+                print(lr_changed)
                 
+                # Normalize the image to [0, 1]
+                # lr_changed = lr_changed / 255.0
+                
+                print(1)
                 # Move lr_changed to the same device as the model
                 lr_changed = lr_changed.to(self.device)
-                
+                print(2)
+
                 swinir = self.SwinIR(ycbcr2rgb(lr_changed))
-                
+                print(3)
+
                 # Move swinir to CPU
                 swinir = to_cpu(swinir)
-                
+                print(4)
                 # Denormalize the image back to [0, 255]
-                swinir = swinir * 255.0
+                # swinir = swinir * 255.0
                 
                 swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
 
