@@ -90,6 +90,7 @@ class State:
                                 
                 # Change from ycbcr to rgb
                 lr_changed = denorm01(lr_changed)
+                lr_changed = lr_changed.type(torch.uint8)
                 lr_changed = ycbcr2rgb(lr_changed)
                 lr_changed = norm01(lr_changed)
                 lr_changed = lr_changed.to(self.device)
@@ -98,6 +99,7 @@ class State:
                 
                 # Change from rgb to ycbcr
                 swinir = denorm01(swinir)
+                swinir = swinir.type(torch.uint8)
                 swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
                 swinir = norm01(swinir)
 
