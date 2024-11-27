@@ -67,7 +67,7 @@ class State:
         move = (move - neutral) / 255
         moved_image = self.sr_image.clone()
         for i in range(0, self.sr_image.shape[1]):
-            moved_image[:,i] += move[0]
+            moved_image[:, i] += move[0]
 
         self.lr_image = self.lr_image.to(self.device)
         self.sr_image = self.sr_image.to(self.device)
@@ -94,7 +94,10 @@ class State:
                 # Move lr_changed to the same device as the model
                 lr_changed = lr_changed.to(self.device)
                 
-                swinir = to_cpu(self.SwinIR(ycbcr2rgb(lr_changed)))
+                swinir = self.SwinIR(ycbcr2rgb(lr_changed))
+                
+                # Move swinir to CPU
+                swinir = to_cpu(swinir)
                 
                 # Denormalize the image back to [0, 255]
                 swinir = swinir * 255.0
