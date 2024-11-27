@@ -80,21 +80,23 @@ class State:
             if exist_value(act, 5):
                 fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
             if exist_value(act, 6):
-                # Pad input image to be a multiple of window_size
-                _, _, h_old, w_old = self.lr_image.size()
-                h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
-                w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
-                # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
-                lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
-                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
-                                
+                # Clone the image
+                lr_changed = self.lr_image.clone()
+                
                 # Change from ycbcr to rgb
                 lr_changed = denorm01(lr_changed)
                 lr_changed = lr_changed.type(torch.uint8)
-                lr_changed = ycbcr2rgb(lr_changed)
+                lr_changed = ycbcr2rgb(lr_changed).float().unsqueeze(0).to(self.device)
                 lr_changed = norm01(lr_changed)
-                lr_changed = lr_changed.to(self.device)
 
+                # Pad input image to be a multiple of window_size
+                _, _, h_old, w_old = lr_changed.size()
+                h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
+                w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+                # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])[:, :, :h_pad, :]], 2)
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
+                
                 swinir = to_cpu(self.SwinIR(lr_changed))
                 
                 # Change from rgb to ycbcr
