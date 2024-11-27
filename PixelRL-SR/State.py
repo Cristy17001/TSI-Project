@@ -82,12 +82,6 @@ class State:
             if exist_value(act, 6):
                 # Clone the image
                 lr_changed = self.lr_image.clone()
-                
-                # Change from ycbcr to rgb
-                lr_changed = denorm01(lr_changed)
-                lr_changed = lr_changed.type(torch.uint8)
-                lr_changed = ycbcr2rgb(lr_changed).float().to(self.device)
-                lr_changed = norm01(lr_changed)
 
                 # Pad input image to be a multiple of window_size
                 _, _, h_old, w_old = lr_changed.size()
@@ -97,13 +91,28 @@ class State:
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])[:, :, :h_pad, :]], 2)
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
                 
-                swinir = to_cpu(self.SwinIR(lr_changed))
+                # Denormalize the image
+                lr_changed = lr_changed * 255
+                lr_changed = lr_changed.type(torch.uint8)
                 
-                # Change from rgb to ycbcr
-                swinir = denorm01(swinir)
+                # Change from ycbcr to rgb
+                lr_changed = ycbcr2rgb(lr_changed).to(self.device)
+            
+                # Normalize the image
+                lr_changed = lr_changed / 255
+                
+                swinir = to_cpu(self.SwinIR(lr_changed))
+                swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
+                
+                # Denormalize the image
+                swinir = swinir * 255
                 swinir = swinir.type(torch.uint8)
-                swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
-                swinir = norm01(swinir)
+                
+                swinir = rgb2ycbcr(swinir)
+                swinir = to_cpu(norm01(swinir))
+                
+                
+                
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
