@@ -80,16 +80,23 @@ class State:
             if exist_value(act, 5):
                 fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
             if exist_value(act, 6):                
-              # pad input image to be a multiple of window_size
-              _, _, h_old, w_old = self.lr_image.size()
-              h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
-              w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
-              # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
-              lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
-              lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
-              print(lr_changed)
-              swinir = to_cpu(self.SwinIR(ycbcr2rgb(lr_changed)))
-              swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
+                # pad input image to be a multiple of window_size
+                _, _, h_old, w_old = self.lr_image.size()
+                h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
+                w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+                # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
+                lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
+                
+                # Normalize the image to [0, 1]
+                lr_changed = lr_changed / 255.0
+                
+                swinir = to_cpu(self.SwinIR(ycbcr2rgb(lr_changed)))
+                
+                # Denormalize the image back to [0, 255]
+                swinir = swinir * 255.0
+                
+                swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
