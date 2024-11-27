@@ -24,7 +24,7 @@ class State:
 
         self.FSRCNN = FSRCNN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
-        self.FSRCNN.load_state_dict(torch.load(model_path, dev))
+        self.FSRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.FSRCNN.eval()
 
         self.ESPCN = ESPCN_model(scale).to(device)
