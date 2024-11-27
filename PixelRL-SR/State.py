@@ -1,6 +1,6 @@
 import torch
 from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model, SwinIR
-from utils.common import exist_value, to_cpu, ycbcr2rgb, rgb2ycbcr
+from utils.common import exist_value, to_cpu, ycbcr2rgb, rgb2ycbcr, norm01, denorm01
 import numpy as np
 import os
 
@@ -90,24 +90,18 @@ class State:
                 
                 print(lr_changed)
                 
-                # Normalize the image to [0, 1]
-                # lr_changed = lr_changed / 255.0
-                
-                print(1)
-                # Move lr_changed to the same device as the model
+                # Change from ycbcr to rgb
+                lr_changed = denorm01(lr_changed)
+                lr_changed = ycbcr2rgb(lr_changed)
+                lr_changed = norm01(lr_changed)
                 lr_changed = lr_changed.to(self.device)
-                print(2)
 
-                swinir = self.SwinIR(ycbcr2rgb(lr_changed))
-                print(3)
-
-                # Move swinir to CPU
-                swinir = to_cpu(swinir)
-                print(4)
-                # Denormalize the image back to [0, 255]
-                # swinir = swinir * 255.0
+                swinir = to_cpu(self.SwinIR(lr_changed))
                 
+                # Change from rgb to ycbcr
+                swinir = denorm01(swinir)
                 swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
+                swinir = norm01(swinir)
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
