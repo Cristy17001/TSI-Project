@@ -1,6 +1,6 @@
 import torch
 from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model, SwinIR
-from utils.common import exist_value, to_cpu
+from utils.common import exist_value, to_cpu, ycbcr2rgb, rgb2ycbcr
 import numpy as np
 import os
 
@@ -79,7 +79,7 @@ class State:
                 srcnn[:, :, 8:-8, 8:-8] = to_cpu(self.SRCNN(self.sr_image))
             if exist_value(act, 5):
                 fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
-            if exist_value(act, 6):
+            if exist_value(act, 6):                
               # pad input image to be a multiple of window_size
               _, _, h_old, w_old = self.lr_image.size()
               h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
@@ -88,8 +88,8 @@ class State:
               lr_changed = torch.cat([self.lr_image, torch.flip(self.lr_image, [2])[:, :, :h_pad, :]], 2)
               lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
               print(lr_changed)
-              swinir = to_cpu(self.SwinIR(lr_changed))
-              swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
+              swinir = to_cpu(self.SwinIR(ycbcr2rgb(lr_changed)))
+              swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
