@@ -79,8 +79,8 @@ class State:
                 srcnn[:, :, 8:-8, 8:-8] = to_cpu(self.SRCNN(self.sr_image))
             if exist_value(act, 5):
                 fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
-            if exist_value(act, 6):                
-                # pad input image to be a multiple of window_size
+            if exist_value(act, 6):
+                # Pad input image to be a multiple of window_size
                 _, _, h_old, w_old = self.lr_image.size()
                 h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
                 w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
@@ -90,6 +90,9 @@ class State:
                 
                 # Normalize the image to [0, 1]
                 lr_changed = lr_changed / 255.0
+                
+                # Move lr_changed to the same device as the model
+                lr_changed = lr_changed.to(self.device)
                 
                 swinir = to_cpu(self.SwinIR(ycbcr2rgb(lr_changed)))
                 
