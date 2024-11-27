@@ -90,28 +90,10 @@ class State:
                 # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])[:, :, :h_pad, :]], 2)
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
-                
-                # Denormalize the image
-                lr_changed = lr_changed * 255
-                lr_changed = lr_changed.type(torch.uint8)
-                
-                # Change from ycbcr to rgb
-                lr_changed = ycbcr2rgb(lr_changed).to(self.device)
-            
-                # Normalize the image
-                lr_changed = lr_changed / 255
-                
-                swinir = to_cpu(self.SwinIR(lr_changed))
-                swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
-                
-                # Denormalize the image
-                swinir = swinir * 255
-                swinir = swinir.type(torch.uint8)
-                
-                swinir = rgb2ycbcr(swinir)
-                swinir = to_cpu(norm01(swinir))
-                
-                
+
+                # Apply the model
+                swinir = self.SwinIR(lr_changed)
+                swinir = swinir[:, :, :h_old * self.scale, :w_old * self.scale]
                 
 
         self.lr_image = to_cpu(self.lr_image)
