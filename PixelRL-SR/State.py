@@ -15,29 +15,25 @@ class State:
         self.scale = scale
 
         dev = torch.device(device)
+        
+        # Next to be replaced with the other model
         self.SRCNN = SRCNN_model().to(device)
         model_path = "sr_weight/SRCNN-955.pt"
         self.SRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.SRCNN.eval()
 
-        # self.FSRCNN = FSRCNN_model(scale).to(device)
-        # model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
-        # self.FSRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
-        # self.FSRCNN.eval()
+        self.FSRCNN = FSRCNN_model(scale).to(device)
+        model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
+        self.FSRCNN.load_state_dict(torch.load(model_path, dev))
+        self.FSRCNN.eval()
+
         self.ESPCN = ESPCN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/ESPCN-x{scale}.pt"
         self.ESPCN.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.ESPCN.eval()
 
-        self.VDSR = VDSR_model().to(device)
-        model_path = "sr_weight/VDSR.pt"
-        self.VDSR.load_state_dict(torch.load(model_path, dev, weights_only=True))
-        self.VDSR.eval()
-
         #/content/TSI-Project/PixelRL-SR/sr_weight/x2/SwinIR-M-x2.pth
         # BATCH SIZE ESTÁ HARDCODED A 64 TEM QUE SER ASSIM
-
-        # self.SwinIR = SwinIR(scale).to(device)
         model_path = f"sr_weight/x{scale}/SwinIR-M_x{scale}.pth"
         self.SwinIR = SwinIR(upscale=scale, in_chans=3, img_size=64, window_size=self.window_size,
             img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
@@ -60,11 +56,11 @@ class State:
     def step(self, act, inner_state):
         act = to_cpu(act)
         inner_state = to_cpu(inner_state)
+        
         srcnn = self.sr_image.clone()
         espcn = self.sr_image.clone()
-        # fsrcnn = self.sr_image.clone()
+        fsrcnn = self.sr_image.clone()
         swinir = self.sr_image.clone()
-        vdsr = self.sr_image.clone()
 
         neutral = (self.move_range - 1) / 2
         move = act.type(torch.float32)
@@ -82,7 +78,7 @@ class State:
             if exist_value(act, 4):
                 srcnn[:, :, 8:-8, 8:-8] = to_cpu(self.SRCNN(self.sr_image))
             if exist_value(act, 5):
-                vdsr = to_cpu(self.VDSR(self.sr_image))
+                fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
             if exist_value(act, 6):
               # pad input image to be a multiple of window_size
               _, _, h_old, w_old = self.lr_image.size()
@@ -100,7 +96,7 @@ class State:
         act = torch.concat([act, act, act], 1)
         self.sr_image = torch.where(act==3, espcn,  self.sr_image)
         self.sr_image = torch.where(act==4, srcnn,  self.sr_image)
-        self.sr_image = torch.where(act==5, vdsr,   self.sr_image)
+        self.sr_image = torch.where(act==5, fsrcnn,   self.sr_image)
         self.sr_image = torch.where(act==6, swinir, self.sr_image)
 
         self.tensor[:,0:3,:,:] = self.sr_image
