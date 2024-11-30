@@ -1,7 +1,9 @@
 import torch
 from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model, SwinIR
+from swinfir.archs.swinfir_arch import SwinFIR
 from utils.common import exist_value, to_cpu, ycbcr2rgb, rgb2ycbcr, norm01, denorm01, write_image
 import numpy as np
+import time
 import os
 
 class State:
@@ -11,16 +13,17 @@ class State:
         self.sr_image = None
         self.tensor = None
         self.move_range = 3
-        self.window_size = 8
+        self.window_size_swinir = 8
+        self.window_size_swinfir = 12
         self.scale = scale
 
         dev = torch.device(device)
         
         # Next to be replaced with the other model
-        self.SRCNN = SRCNN_model().to(device)
-        model_path = "sr_weight/SRCNN-955.pt"
-        self.SRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
-        self.SRCNN.eval()
+        #self.SRCNN = SRCNN_model().to(device)
+        #model_path = "sr_weight/SRCNN-955.pt"
+        #self.SRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        #self.SRCNN.eval()
 
         self.FSRCNN = FSRCNN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
@@ -32,10 +35,25 @@ class State:
         self.ESPCN.load_state_dict(torch.load(model_path, dev, weights_only=True))
         self.ESPCN.eval()
 
-        #/content/TSI-Project/PixelRL-SR/sr_weight/x2/SwinIR-M-x2.pth
-        # BATCH SIZE ESTÁ HARDCODED A 64 TEM QUE SER ASSIM
+        # SwinFIR_SRx2.pth
+        model_path = f"sr_weight/x{scale}/SwinFIR_SRx{scale}.pth"
+        self.SwinFIR = SwinFIR(
+            upscale=scale,
+            in_chans=3,
+            img_size=60,
+            window_size=self.window_size_swinfir,
+            img_range=1.,
+            depths=[6, 6, 6, 6, 6, 6],
+            embed_dim=180,
+            num_heads=[6, 6, 6, 6, 6, 6],
+            mlp_ratio=2,
+            upsampler='pixelshuffle',
+            resi_connection='SFB').to(device)
+        self.SwinFIR.load_state_dict(torch.load(model_path, dev, weights_only=True)["params_ema"], strict=True)
+        self.SwinFIR.eval()
+
         model_path = f"sr_weight/x{scale}/SwinIR-M_x{scale}.pth"
-        self.SwinIR = SwinIR(upscale=scale, in_chans=3, img_size=64, window_size=self.window_size,
+        self.SwinIR = SwinIR(upscale=scale, in_chans=3, img_size=64, window_size=self.window_size_swinir,
             img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
             mlp_ratio=2, upsampler='pixelshuffle', resi_connection='1conv').to(device)
         self.SwinIR.load_state_dict(torch.load(model_path, dev, weights_only=True)['params'], strict=True)
@@ -57,7 +75,7 @@ class State:
         act = to_cpu(act)
         inner_state = to_cpu(inner_state)
         
-        srcnn = self.sr_image.clone()
+        swinfir = self.sr_image.clone()
         espcn = self.sr_image.clone()
         fsrcnn = self.sr_image.clone()
         swinir = self.sr_image.clone()
@@ -74,27 +92,58 @@ class State:
 
         with torch.no_grad():
             if exist_value(act, 3):
+                print("ESPCN")
                 espcn = to_cpu(self.ESPCN(self.lr_image))
-            if exist_value(act, 4):
-                srcnn[:, :, 8:-8, 8:-8] = to_cpu(self.SRCNN(self.sr_image))
+            if exist_value(act, 4):                
+                print("SwinFIR")
+                lr_changed = self.lr_image.clone()
+                print(lr_changed.size())
+                window_size = 12
+                # Pad the image to be divisible by the window size
+                _, _, h, w = lr_changed.size()
+                mod_pad_h = (h // window_size + 1) * window_size - h
+                mod_pad_w = (w // window_size + 1) * window_size - w
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])], 2)[:, :, :h + mod_pad_h, :]
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])], 3)[:, :, :, :w + mod_pad_w]
+                
+                # Change from ycbcr to rgb
+                lr_changed = denorm01(lr_changed)
+                
+                # Assuming lr_changed is a batch of images
+                images_rgb = [ycbcr2rgb(image) for image in lr_changed]  
+                
+                # Stack the converted images back into a single tensor
+                images_rgb = torch.stack(images_rgb).to(self.device)
+                
+                # Save image before
+                # images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
+                # write_image("before_test.png", images_rgb_[0])
+                
+                swinfir = to_cpu(self.SwinFIR(images_rgb))
+                swinfir = swinfir.data[..., :h * self.scale, :w * self.scale]
+                swinfir = swinfir.float().cpu().clamp_(0, 255)
+                swinfir = swinfir.to(torch.uint8)
+                
+                # Save image after
+                # write_image("after_test.png", swinfir[0])
+                # print("Wrote images")
+                
+                # # Change from rgb to ycbcr
+                swinfir = [rgb2ycbcr(image) for image in swinfir]
+                swinfir = torch.stack(swinfir).to(self.device)
+                
+                # # Normalize the image again
+                swinfir = to_cpu(norm01(swinir))
             if exist_value(act, 5):
-                fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
                 print("FSRCNN")
-                #img = torch.clip(fsrcnn[2], 0.0, 1.0)
-                #img = denorm01(img)
-                #img = img.type(torch.uint8)
-                #img = ycbcr2rgb(img)
-                #write_image("sr.png", img)
-                #print("Wrote image")
-                #return
+                fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
             if exist_value(act, 6):
                 print("SwinIR")
                 lr_changed = self.lr_image.clone()
-                
                 # Pad the image to be divisible by the window size
-                n, c, h_old, w_old = lr_changed.size()
-                h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
-                w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
+                _, _, h_old, w_old = lr_changed.size()
+                h_pad = (h_old // self.window_size_swinir + 1) * self.window_size_swinir - h_old
+                w_pad = (w_old // self.window_size_swinir + 1) * self.window_size_swinir - w_old
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])], 2)[:, :, :h_old + h_pad, :]
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])], 3)[:, :, :, :w_old + w_pad]
 
@@ -106,14 +155,12 @@ class State:
                 images_rgb = [ycbcr2rgb(image) for image in lr_changed]
                 # Stack the converted images back into a single tensor
                 images_rgb = torch.stack(images_rgb).to(self.device)
-                                
-                # Save image before
-                #images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
-                #write_image("lr_test.png", images_rgb_[0])
                 
+                start_time = time.time()
                 swinir = to_cpu(self.SwinIR(images_rgb))
-                #print(swinir_)
+                end_time = time.time()
                 
+
                 swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
                 
                 # Change from rgb to ycbcr
@@ -128,7 +175,7 @@ class State:
         act = act.unsqueeze(1)
         act = torch.concat([act, act, act], 1)
         self.sr_image = torch.where(act==3, espcn,  self.sr_image)
-        self.sr_image = torch.where(act==4, srcnn,  self.sr_image)
+        self.sr_image = torch.where(act==4, swinfir,  self.sr_image)
         self.sr_image = torch.where(act==5, fsrcnn,   self.sr_image)
         self.sr_image = torch.where(act==6, swinir, self.sr_image)
 

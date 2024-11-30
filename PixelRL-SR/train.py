@@ -9,6 +9,7 @@ import argparse
 import torch
 import os
 
+torch.autograd.set_detect_anomaly(True)
 torch.manual_seed(1)
 
 # =====================================================================================
