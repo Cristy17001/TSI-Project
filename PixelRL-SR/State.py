@@ -1,6 +1,6 @@
 import torch
 from neuralnet import ESPCN_model, FSRCNN_model, SRCNN_model, VDSR_model, SwinIR
-from utils.common import exist_value, to_cpu, ycbcr2rgb, rgb2ycbcr, norm01, denorm01
+from utils.common import exist_value, to_cpu, ycbcr2rgb, rgb2ycbcr, norm01, denorm01, write_image
 import numpy as np
 import os
 
@@ -79,22 +79,52 @@ class State:
                 srcnn[:, :, 8:-8, 8:-8] = to_cpu(self.SRCNN(self.sr_image))
             if exist_value(act, 5):
                 fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
+                print("FSRCNN")
+                #img = torch.clip(fsrcnn[2], 0.0, 1.0)
+                #img = denorm01(img)
+                #img = img.type(torch.uint8)
+                #img = ycbcr2rgb(img)
+                #write_image("sr.png", img)
+                #print("Wrote image")
+                #return
             if exist_value(act, 6):
-                # Clone the image
+                print("SwinIR")
                 lr_changed = self.lr_image.clone()
-
-                # Pad input image to be a multiple of window_size
-                _, _, h_old, w_old = lr_changed.size()
+                
+                # Pad the image to be divisible by the window size
+                n, c, h_old, w_old = lr_changed.size()
                 h_pad = (h_old // self.window_size + 1) * self.window_size - h_old
                 w_pad = (w_old // self.window_size + 1) * self.window_size - w_old
-                # Pad the vertical and horizontal sides of the image with the flip of the image just to be able to process it
-                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])[:, :, :h_pad, :]], 2)
-                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])[:, :, :, :w_pad]], 3)
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])], 2)[:, :, :h_old + h_pad, :]
+                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])], 3)[:, :, :, :w_old + w_pad]
 
-                # Apply the model
-                swinir = self.SwinIR(lr_changed)
-                swinir = swinir[:, :, :h_old * self.scale, :w_old * self.scale]
+                # Change from ycbcr to rgb              
+                lr_changed = denorm01(lr_changed)
+                lr_changed = lr_changed.type(torch.uint8)
                 
+                # Assuming lr_changed is a batch of images
+                images_rgb = [ycbcr2rgb(image) for image in lr_changed]
+                # Stack the converted images back into a single tensor
+                images_rgb = torch.stack(images_rgb).to(self.device)
+                                
+                # Save image before
+                images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
+                write_image("lr_test.png", images_rgb_[0])
+                
+                swinir_ = to_cpu(self.SwinIR(images_rgb))
+                print(swinir_)
+                
+                swinir_ = swinir_[..., :h_old * self.scale, :w_old * self.scale]
+                # Save image after
+                images_rgb_ = to_cpu(swinir_.type(torch.uint8))
+                write_image("sr_test.png", images_rgb_[0])
+                                
+                # Change from rgb to ycbcr
+                #swinir = denorm01(swinir)
+                #swinir = swinir.type(torch.uint8)
+                #swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
+                #swinir = norm01(swinir)
+                #swinir = swinir.type(torch.uint8)
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
