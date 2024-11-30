@@ -108,23 +108,20 @@ class State:
                 images_rgb = torch.stack(images_rgb).to(self.device)
                                 
                 # Save image before
-                images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
-                write_image("lr_test.png", images_rgb_[0])
+                #images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
+                #write_image("lr_test.png", images_rgb_[0])
                 
-                swinir_ = to_cpu(self.SwinIR(images_rgb))
-                print(swinir_)
+                swinir = to_cpu(self.SwinIR(images_rgb))
+                #print(swinir_)
                 
-                swinir_ = swinir_[..., :h_old * self.scale, :w_old * self.scale]
-                # Save image after
-                images_rgb_ = to_cpu(swinir_.type(torch.uint8))
-                write_image("sr_test.png", images_rgb_[0])
-                                
+                swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
+                
                 # Change from rgb to ycbcr
-                #swinir = denorm01(swinir)
-                #swinir = swinir.type(torch.uint8)
-                #swinir = rgb2ycbcr(swinir[..., :h_old * self.scale, :w_old * self.scale])
-                #swinir = norm01(swinir)
-                #swinir = swinir.type(torch.uint8)
+                swinir = [rgb2ycbcr(image) for image in swinir]
+                swinir = torch.stack(swinir).to(self.device)
+                
+                # Normalize the image again
+                swinir = to_cpu(norm01(swinir))
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
