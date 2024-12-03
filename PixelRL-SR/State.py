@@ -94,10 +94,9 @@ class State:
             if exist_value(act, 3):
                 print("ESPCN")
                 espcn = to_cpu(self.ESPCN(self.lr_image))
-            if exist_value(act, 4):                
+            if exist_value(act, 4):    
                 print("SwinFIR")
                 lr_changed = self.lr_image.clone()
-                
                 window_size = 12
                 # Pad the image to be divisible by the window size
                 _, _, h, w = lr_changed.size()
@@ -139,28 +138,33 @@ class State:
             if exist_value(act, 6):
                 print("SwinIR")
                 lr_changed = self.lr_image.clone()
+                window_size = 8
 
                 # Pad the image to be divisible by the window size
                 _, _, h_old, w_old = lr_changed.size()
-                h_pad = (h_old // self.window_size_swinir + 1) * self.window_size_swinir - h_old
-                w_pad = (w_old // self.window_size_swinir + 1) * self.window_size_swinir - w_old
+                h_pad = (h_old // window_size + 1) * window_size - h_old
+                w_pad = (w_old // window_size + 1) * window_size - w_old
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])], 2)[:, :, :h_old + h_pad, :]
                 lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])], 3)[:, :, :, :w_old + w_pad]
 
                 # Change from ycbcr to rgb
-                lr_changed = denorm01(lr_changed.clone()).clone()
-                # Assuming lr_changed is a batch of images
-                images_rgb = torch.stack([ycbcr2rgb(image.clone()) for image in lr_changed]).to(self.device)
+                lr_changed = denorm01(lr_changed).clone()
+                lr_changed = lr_changed.type(torch.uint8)
+                images_rgb = [ycbcr2rgb(image) for image in lr_changed]
+                images_rgb = torch.stack(images_rgb).to(self.device)
 
                 swinir = to_cpu(self.SwinIR(images_rgb))
-                swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
                 swinir = swinir.float().cpu().clamp(0, 255)
                 swinir = swinir.to(torch.uint8)
+                
+                swinir = swinir[..., :h_old * self.scale, :w_old * self.scale]
 
-                swinir = torch.stack([rgb2ycbcr(image.clone()) for image in swinir.clone()]).to(self.device)
+                # Change from rgb to ycbcr
+                swinir = [rgb2ycbcr(image) for image in swinir]
+                swinir = torch.stack(swinir).to(self.device)
 
                 # Normalize the image again
-                swinir = to_cpu(norm01(swinir.clone()))
+                swinir = to_cpu(norm01(swinir))
 
         self.lr_image = to_cpu(self.lr_image)
         self.sr_image = moved_image
