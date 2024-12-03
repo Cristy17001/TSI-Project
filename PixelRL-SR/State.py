@@ -101,39 +101,42 @@ class State:
                 window_size = 12
                 # Pad the image to be divisible by the window size
                 _, _, h, w = lr_changed.size()
-                mod_pad_h = (h // window_size + 1) * window_size - h
-                mod_pad_w = (w // window_size + 1) * window_size - w
-                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [2])], 2)[:, :, :h + mod_pad_h, :]
-                lr_changed = torch.cat([lr_changed, torch.flip(lr_changed, [3])], 3)[:, :, :, :w + mod_pad_w]
-                
+                mod_pad_h = (self.window_size_swinfir - (h % self.window_size_swinfir)) % self.window_size_swinfir
+                mod_pad_w = (self.window_size_swinfir - (w % self.window_size_swinfir)) % self.window_size_swinfir
+
+                # Apply reflective padding
+                lr_changed = torch.nn.functional.pad(
+                    lr_changed,
+                    (0, mod_pad_w, 0, mod_pad_h),  # (left, right, top, bottom)
+                    mode='replicate'
+                )
+
+                print(f"Original: {h}x{w}, Padded: {h + mod_pad_h}x{w + mod_pad_w}")
                 # Change from ycbcr to rgb
-                lr_changed = denorm01(lr_changed)
+                lr_changed = denorm01(lr_changed).clone()
                 
                 # Assuming lr_changed is a batch of images
-                images_rgb = [ycbcr2rgb(image) for image in lr_changed]  
-                
-                # Stack the converted images back into a single tensor
-                images_rgb = torch.stack(images_rgb).to(self.device)
-                
-                # Save image before
-                # images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
-                # write_image("before_test.png", images_rgb_[0])
+                images_rgb = torch.stack([ycbcr2rgb(image.clone()) for image in lr_changed]).to(self.device)
+                #Save image before
+                images_rgb_ = to_cpu(images_rgb.type(torch.uint8))
+                write_image("before_test.png", images_rgb_[0])
                 
                 swinfir = to_cpu(self.SwinFIR(images_rgb))
-                swinfir = swinfir.data[..., :h * self.scale, :w * self.scale]
-                swinfir = swinfir.float().cpu().clamp_(0, 255)
+                # Crop back to the original scale
+                h_orig, w_orig = h * self.scale, w * self.scale
+                swinfir = swinfir[..., :h_orig, :w_orig]
+                swinfir = swinfir.float().cpu().clamp(0, 255)
                 swinfir = swinfir.to(torch.uint8)
                 
-                # Save image after
-                # write_image("after_test.png", swinfir[0])
-                # print("Wrote images")
+                print(f"Super-resolved: {swinfir.shape[-2:]}, Cropped: {h * self.scale}x{w * self.scale}")
+                #Save image after
+                write_image("after_test.png", swinfir[0])
+                print("Wrote images")
                 
                 # # Change from rgb to ycbcr
-                swinfir = [rgb2ycbcr(image) for image in swinfir]
-                swinfir = torch.stack(swinfir).to(self.device)
-                
+                swinfir = torch.stack([rgb2ycbcr(image.clone()) for image in swinfir.clone()]).to(self.device)
                 # # Normalize the image again
-                swinfir = to_cpu(norm01(swinir))
+                swinfir = to_cpu(norm01(swinfir.clone()))
             if exist_value(act, 5):
                 print("FSRCNN")
                 fsrcnn = to_cpu(self.FSRCNN(self.lr_image))
