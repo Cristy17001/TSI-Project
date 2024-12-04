@@ -70,14 +70,14 @@ class PixelWiseA3C_InnerState_ConvR:
 
     def load_checkpoint(self, ckpt_path):
         if exists(ckpt_path):
-            self.ckpt_man = torch.load(ckpt_path, weights_only=True)
+            self.ckpt_man = torch.load(ckpt_path)
             self.optimizer.load_state_dict(self.ckpt_man['optimizer'])
             self.shared_model.load_state_dict(self.ckpt_man['shared_model'])
             self.model.load_state_dict(self.ckpt_man['model'])
 
     def load_weights(self, filepath):
         if exists(filepath):
-            ckpt = torch.load(filepath, torch.device(self.device), weights_only=True)
+            ckpt = torch.load(filepath, torch.device(self.device))
             self.model.load_state_dict(ckpt)
 
     def evaluate(self, dataset, batch_size):

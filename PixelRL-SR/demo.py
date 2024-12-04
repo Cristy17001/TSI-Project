@@ -68,7 +68,7 @@ def main():
 
     MODEL = PixelRL_model(N_ACTIONS).to(DEVICE)
     if exists(MODEL_PATH):
-        MODEL.load_state_dict(torch.load(MODEL_PATH, torch.device(DEVICE), weights_only=True))
+        MODEL.load_state_dict(torch.load(MODEL_PATH, torch.device(DEVICE)))
     MODEL.eval()
 
     lr_image = read_image(IMAGE_PATH)

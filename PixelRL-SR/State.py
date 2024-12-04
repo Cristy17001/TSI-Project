@@ -22,17 +22,17 @@ class State:
         # Next to be replaced with the other model
         #self.SRCNN = SRCNN_model().to(device)
         #model_path = "sr_weight/SRCNN-955.pt"
-        #self.SRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        #self.SRCNN.load_state_dict(torch.load(model_path, dev))
         #self.SRCNN.eval()
 
         self.FSRCNN = FSRCNN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/FSRCNN-x{scale}.pt"
-        self.FSRCNN.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        self.FSRCNN.load_state_dict(torch.load(model_path, dev))
         self.FSRCNN.eval()
 
         self.ESPCN = ESPCN_model(scale).to(device)
         model_path = f"sr_weight/x{scale}/ESPCN-x{scale}.pt"
-        self.ESPCN.load_state_dict(torch.load(model_path, dev, weights_only=True))
+        self.ESPCN.load_state_dict(torch.load(model_path, dev))
         self.ESPCN.eval()
 
         # SwinFIR_SRx2.pth
@@ -49,14 +49,14 @@ class State:
             mlp_ratio=2,
             upsampler='pixelshuffle',
             resi_connection='SFB').to(device)
-        self.SwinFIR.load_state_dict(torch.load(model_path, dev, weights_only=True)["params_ema"], strict=True)
+        self.SwinFIR.load_state_dict(torch.load(model_path, dev)["params_ema"], strict=True)
         self.SwinFIR.eval()
 
         model_path = f"sr_weight/x{scale}/SwinIR-M_x{scale}.pth"
         self.SwinIR = SwinIR(upscale=scale, in_chans=3, img_size=64, window_size=self.window_size_swinir,
             img_range=1., depths=[6, 6, 6, 6, 6, 6], embed_dim=180, num_heads=[6, 6, 6, 6, 6, 6],
             mlp_ratio=2, upsampler='pixelshuffle', resi_connection='1conv').to(device)
-        self.SwinIR.load_state_dict(torch.load(model_path, dev, weights_only=True)['params'], strict=True)
+        self.SwinIR.load_state_dict(torch.load(model_path, dev)['params'], strict=True)
         self.SwinIR.eval()
 
     def reset(self, lr, bicubic):
