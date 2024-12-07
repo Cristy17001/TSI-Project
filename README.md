@@ -266,14 +266,27 @@ I evaluated models with Set5, Set14, BSD100 and Urban100 dataset by PSNR, the Bo
     </tr>
 </table><br/>
 
-<img src="./README/example.png" width="1000"/><br/>
-<b>Butterfly.png in Set5, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).</b>
+<div style="white-space: nowrap; margin-top: 10px">
+  <img src="./README/bicubic_test1.png" width="250" style="display: inline-block;"/>
+  <img src="./README/sr_test1.png" width="250" style="display: inline-block;"/>
+  <img src="./README/hr_test1.png" width="250" style="display: inline-block;"/>
+</div>
+<b>Baby from Set5(img_001), Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).</b>
 
-<img src="./README/example-1.png" width="1000"/><br/>
-<b>Baboon.png in Set14, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).</b>
 
-<img src="./README/example-2.png" width="1000"/><br/>
-<b>img_001.png in Urban100, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).</b>
+<div style="white-space: nowrap; margin-top: 10px">
+  <img src="./README/bicubic_test2.png" width="250" style="display: inline-block;"/>
+  <img src="./README/sr_test2.png" width="250" style="display: inline-block;"/>
+  <img src="./README/hr_test2.png" width="250" style="display: inline-block;"/>
+</div>
+<b>Building(img_005) from URBAN100, Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).</b>
+
+<div style="white-space: nowrap; margin-top: 10px">
+  <img src="./README/bicubic_test3.png" width="250" style="display: inline-block;"/>
+  <img src="./README/sr_test3.png" width="250" style="display: inline-block;"/>
+  <img src="./README/hr_test3.png" width="250" style="display: inline-block;"/>
+</div>
+<b>Person from Set14(img_008), Bicubic (left), PixelRL-SR x2 (center), High Resolution (right).</b>
 
 </div>
 
