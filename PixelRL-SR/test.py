@@ -4,10 +4,21 @@ sys.dont_write_bytecode = True
 import argparse
 from neuralnet import PixelRL_model 
 from State import State
+import random
 import torch
 from utils.common import *
 
-torch.manual_seed(1)
+# Set random seeds for reproducibility
+def set_random_seeds(seed_value=42):
+    torch.manual_seed(seed_value)
+    torch.cuda.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)  # if you are using multi-GPU.
+    np.random.seed(seed_value)  # Numpy module.
+    random.seed(seed_value)  # Python random module.
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+
+set_random_seeds()
 
 # =====================================================================================
 # arguments parser
@@ -16,6 +27,7 @@ torch.manual_seed(1)
 parser = argparse.ArgumentParser()
 parser.add_argument("--scale",     type=int, default=2,  help='-')
 parser.add_argument("--ckpt-path", type=str, default="", help='-')
+parser.add_argument("--test-set", type=str, default="SET5", help='-')
 FLAG, unparsed = parser.parse_known_args()
 
 
@@ -37,9 +49,22 @@ GAMMA = 0.95
 T_MAX = 5
 SIGMA = 0.3 if SCALE == 2 else 0.2
 
-LS_HR_PATHS = sorted_list(f"dataset/test/x{SCALE}/labels")
-LS_LR_PATHS = sorted_list(f"dataset/test/x{SCALE}/data")
-
+dataset = FLAG.test_set
+print(f"Testing on {dataset} dataset")
+if dataset == "SET5":
+    LS_HR_PATHS = sorted_list(f"dataset/test/x{SCALE}/labels")
+    LS_LR_PATHS = sorted_list(f"dataset/test/x{SCALE}/data")
+elif dataset == "SET14":
+    LS_HR_PATHS = sorted_list(f"dataset/test/Set14_test/x{SCALE}/labels")
+    LS_LR_PATHS = sorted_list(f"dataset/test/Set14_test/x{SCALE}/data")
+elif dataset == "BSD100":
+    LS_HR_PATHS = sorted_list(f"dataset/test/BSD100_test/x{SCALE}/labels")
+    LS_LR_PATHS = sorted_list(f"dataset/test/BSD100_test/x{SCALE}/data")
+elif dataset == "URBAN100":
+    LS_HR_PATHS = sorted_list(f"dataset/test/Urban100_test/x{SCALE}/labels")
+    LS_LR_PATHS = sorted_list(f"dataset/test/Urban100_test/x{SCALE}/data")
+else:
+    raise ValueError("dataset must be SET5, SET14, URBAN100, BSD100")
 
 # =====================================================================================
 # Test each image
