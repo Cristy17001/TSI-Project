@@ -86,7 +86,7 @@ python train.py --scale=2              \
 **NOTE**: if you want to re-train a new model, you should delete all files in **checkpoint** sub-directory. Your checkpoint will be saved when above command finishs and can be used for the next times, so you can train a model on **Lightning AI** without taking care of GPU time limit.
 
 We trained the models on **Lightning AI** in **2000 steps** each of the models with a **NVIDIA T4** as the graphics card:
-<a target="_blank" href="https://lightning.ai/cristy17001/vision-model/studios/tsi-project-y3r5/code?turnOn=true">
+<a target="_blank" href="https://lightning.ai/cristy17001/studios/tsi-project">
 <img src="https://pl-bolts-doc-images.s3.us-east-2.amazonaws.com/app-2/studio-badge.svg" alt="Open in Studio" />
 </a>
 
